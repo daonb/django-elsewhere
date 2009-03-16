@@ -50,6 +50,19 @@ Add the following to your urlconf:
 
 For sample templates add the path to elsewhere/templates to your TEMPLATE_DIRS setting.
 
+Template Tags:
+--------------
+
+django-elsewhere comes with the 'elsewhere_networks' template tag you can use
+ in your views to get a user's list of social networks. Example:
+
+    {% load elsewhere_tags %}
+    ...
+    {% elsewhere_networks user as user_networks %}
+    {% for sn in user_networks %}
+        <a href="{{ sn.profile_url|escape }}" rel="me">{{ sn.profile_name|escape }}</a>
+    {% endfor %}
+
 About the models:
 -----------------
 
