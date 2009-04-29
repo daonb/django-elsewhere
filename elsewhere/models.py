@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django import forms
 from django.db import models
+from django.conf import settings
 from django.core.cache import cache
 from django.contrib import admin
 from django.contrib.auth.models import User
@@ -12,7 +13,7 @@ from django.core.urlresolvers import reverse
 GOOGLE_PROFILE_URL = 'http://www.google.com/s2/favicons?domain_url=%s'
 SN_CACHE_KEY = 'elsewhere_sn_data'
 IM_CACHE_KEY = 'elsewhere_im_data'
-
+ELSEWHERE_FEED_FREQUENCY = getattr (settings, ELSEWHERE_FEED_FREQUENCY, 15) # in minutes
 
 class Network(models.Model):
     """ Model for storing networks. """
@@ -36,6 +37,13 @@ class SocialNetwork(Network):
         cache.delete(SN_CACHE_KEY)
         super(SocialNetwork, self).save(*args, **kwargs)
 
+class Feed(SocialNetwork):
+    """ Model for storing a refernce to a network feeds and per feed setting"""
+    feed_url = models.URLField()
+    mime_type = models.CharField(max_length=32)
+    frequency = models.IntegerFeild(help_text="as in every <frequency> minutes", 
+                                    default=ELSEWHERE_FEED_FREQUENCY)
+     
 class InstantMessenger(Network):
     class Meta:
         verbose_name_plural = 'instant messanger networks'
