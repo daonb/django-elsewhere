@@ -41,7 +41,7 @@ class Feed(SocialNetwork):
     """ Model for storing a refernce to a network feeds and per feed setting"""
     feed_url = models.URLField()
     mime_type = models.CharField(max_length=32)
-    frequency = models.IntegerFeild(help_text="as in every <frequency> minutes", 
+    frequency = models.IntegerFeild(help_text="as in every <frequency> minutes",
                                     default=ELSEWHERE_FEED_FREQUENCY)
      
 class InstantMessenger(Network):
@@ -115,8 +115,32 @@ class InstantMessengerManager(ProfileManager):
     data = InstantMessengerData()
 im_manager = InstantMessengerManager()
 
+class NetworkManager:
+    ''' One manager to rule all networks '''
+    # TODO: could be dryer    
+    networks = [(f.id, f.name, 'social') for f in SocialNetwork.objects.all.values('id', 'name' )]
+    networks += [(f.id, f.name, 'im') for f in InstantMessenger.objects.all.values('id', 'name')]
+    networks += [(f.id, f.name, 'feed') for f in Feed.objects.all.values('id', 'name')]
+
+    data = {}
+    for net in networks:
+        data.append({'id': net.id, 'name': net.id)
+
+    cache_entry_len = len(Network.name) + len(Network.id)
+    cache.set(cache_key, data, 120*120*cache_entry_len)
+        
+    def _get_choices(self):
+        """ List of choices for profile select fields. """
+        return [(props['id'], props['name']) for props in self.data]
+    choices = property(_get_choices)
+
+net_manager = NetworkManager()
+
 class Profile(models.Model):
-    """ Common profile model pieces. """
+    """ Common profile model pieces. 
+    
+        A abstract class as network_id has to be added by inherting classes
+    """
     data_manager = None
 
     date_added = models.DateTimeField(_('date added'), auto_now_add=True)
@@ -129,10 +153,12 @@ class Profile(models.Model):
     def _get_data_item(self):
         # Find profile data for this profile id
         for network in self.data_manager.data:
+            # network_id is defined in the inherting class
             if network['id'] == self.network_id:
                 return network
         return None
     data_item = property(_get_data_item)
+    network = data_item # suggests to use instead of data_item
 
     def _get_name(self):
         # Profile display name
